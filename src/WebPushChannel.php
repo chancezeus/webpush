@@ -2,68 +2,71 @@
 
 namespace NotificationChannels\WebPush;
 
-use Minishlink\WebPush\WebPush;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Collection;
+use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\WebPush;
+use NotificationChannels\WebPush\Contracts\WebPushSubscription;
 
 class WebPushChannel
 {
+    /** @var \Illuminate\Contracts\Events\Dispatcher */
+    protected $events;
+
     /** @var \Minishlink\WebPush\WebPush */
     protected $webPush;
 
     /**
-     * @param  \Minishlink\WebPush\WebPush $webPush
-     * @return void
+     * @param \Illuminate\Contracts\Events\Dispatcher $events
+     * @param \Minishlink\WebPush\WebPush $webPush
      */
-    public function __construct(WebPush $webPush)
+    public function __construct(Dispatcher $events, WebPush $webPush)
     {
+        $this->events = $events;
         $this->webPush = $webPush;
     }
 
     /**
      * Send the given notification.
      *
-     * @param  mixed $notifiable
-     * @param  \Illuminate\Notifications\Notification $notification
+     * @param mixed $notifiable
+     * @param \Illuminate\Notifications\Notification $notification
      * @return void
+     * @throws \ErrorException
+     * @throws \Exception
      */
     public function send($notifiable, Notification $notification)
     {
-        $subscriptions = $notifiable->routeNotificationFor('WebPush');
+        $subscriptions = Collection::make($notifiable->routeNotificationFor('webPush'));
 
-        if (! $subscriptions || $subscriptions->isEmpty()) {
+        if ($subscriptions->isEmpty() || !method_exists($notification, 'toWebPush')) {
             return;
         }
 
         $payload = json_encode($notification->toWebPush($notifiable, $notification)->toArray());
 
-        $subscriptions->each(function ($sub) use ($payload) {
+        $subscriptions->each(function (WebPushSubscription $subscription) use ($payload) {
             $this->webPush->sendNotification(
-                $sub->endpoint,
-                $payload,
-                $sub->public_key,
-                $sub->auth_token
+                new Subscription(
+                    $subscription->getEndpoint(),
+                    $subscription->getPublicKey(),
+                    $subscription->getAuthToken()
+                ),
+                $payload
             );
         });
 
         $response = $this->webPush->flush();
 
-        $this->deleteInvalidSubscriptions($response, $subscriptions);
-    }
-
-    /**
-     * @param  array|bool $response
-     * @param  \Illuminate\Database\Eloquent\Collection $subscriptions
-     * @return void
-     */
-    protected function deleteInvalidSubscriptions($response, $subscriptions)
-    {
-        if (! is_array($response)) {
-            return;
-        }
-
         foreach ($response as $index => $value) {
-            if (! $value['success'] && isset($subscriptions[$index])) {
-                $subscriptions[$index]->delete();
+            if (!$value->isSuccess()) {
+                $this->events->dispatch(new NotificationFailed($notifiable, $notification, $this, [
+                    'subscription' => $subscriptions[$index],
+                    'expired' => $value->isSubscriptionExpired(),
+                    'reason' => $value
+                ]));
             }
         }
     }

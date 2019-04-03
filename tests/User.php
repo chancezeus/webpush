@@ -2,13 +2,20 @@
 
 namespace NotificationChannels\WebPush\Test;
 
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 
+/**
+ * @property int $id
+ * @property string $email
+ * @property-read \Illuminate\Database\Eloquent\Collection|\NotificationChannels\WebPush\WebPushSubscription $webPushSubscriptions
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class User extends Authenticatable
 {
-    use Notifiable, HasPushSubscriptions;
+    use HasPushSubscriptions;
+    use Notifiable;
 
     public $timestamps = false;
 

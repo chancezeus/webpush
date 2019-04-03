@@ -2,18 +2,18 @@
 
 namespace NotificationChannels\WebPush\Test;
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\File;
+use NotificationChannels\WebPush\WebPushServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
-use NotificationChannels\WebPush\PushSubscription;
 
 abstract class TestCase extends Orchestra
 {
     /** @var \NotificationChannels\WebPush\Test\User */
     protected $testUser;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -34,7 +34,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('database.default', 'sqlite');
         $app['config']->set('database.connections.sqlite', [
             'driver' => 'sqlite',
-            'database' => $this->getTempDirectory().'/database.sqlite',
+            'database' => $this->getTempDirectory() . '/database.sqlite',
             'prefix' => '',
         ]);
 
@@ -42,13 +42,13 @@ abstract class TestCase extends Orchestra
     }
 
     /**
-     * @param  \Illuminate\Foundation\Application $app
+     * @param \Illuminate\Foundation\Application $app
      * @return array
      */
     protected function getPackageProviders($app)
     {
         return [
-            \NotificationChannels\WebPush\WebPushServiceProvider::class,
+            WebPushServiceProvider::class,
         ];
     }
 
@@ -57,16 +57,16 @@ abstract class TestCase extends Orchestra
      */
     protected function setUpDatabase($app)
     {
-        file_put_contents($this->getTempDirectory().'/database.sqlite', null);
+        file_put_contents($this->getTempDirectory() . '/database.sqlite', null);
 
         $app['db']->connection()->getSchemaBuilder()->create('users', function (Blueprint $table) {
             $table->increments('id');
             $table->string('email');
         });
 
-        include_once __DIR__.'/../migrations/create_push_subscriptions_table.php.stub';
+        include_once __DIR__ . '/../migrations/create_push_subscriptions_table.php.stub';
 
-        (new \CreatePushSubscriptionsTable())->up();
+        (new \CreateWebPushSubscriptionsTable())->up();
 
         $this->createUser(['email' => 'test@user.com']);
     }
@@ -81,22 +81,22 @@ abstract class TestCase extends Orchestra
         if (File::isDirectory($directory)) {
             File::deleteDirectory($directory);
         }
-        if (! File::exists($directory)) {
+        if (!File::exists($directory)) {
             File::makeDirectory($directory);
         }
     }
 
     /**
-     * @param  string $suffix
+     * @param string $suffix
      * @return string
      */
     public function getTempDirectory($suffix = '')
     {
-        return __DIR__.'/temp'.($suffix == '' ? '' : '/'.$suffix);
+        return __DIR__ . '/temp' . ($suffix == '' ? '' : '/' . $suffix);
     }
 
     /**
-     * @param  array  $attributes
+     * @param array $attributes
      * @return \NotificationChannels\WebPush\Test\User
      */
     public function createUser(array $attributes)
@@ -105,25 +105,27 @@ abstract class TestCase extends Orchestra
     }
 
     /**
-     * @param  \NotificationChannels\WebPush\Test\User $user
-     * @param  string $endpoint
-     * @return \NotificationChannels\WebPush\PushSubscription
+     * @param \NotificationChannels\WebPush\Test\User $user
+     * @param string $endpoint
+     * @return \NotificationChannels\WebPush\WebPushSubscription
      */
-    public function createSubscription($user, $endpoint = 'endpoint')
+    public function createSubscription(User $user, string $endpoint = 'endpoint')
     {
-        $sub = $this->app[PushSubscription::class]->forceFill([
-            'user_id' => $user->id,
-            'endpoint' => $endpoint,
-            'public_key' => 'key',
-            'auth_token' => 'token',
-        ]);
+        /** @var \NotificationChannels\WebPush\WebPushSubscription $subscription */
+        $subscription = $user->webPushSubscriptions()
+            ->create([
+                'endpoint' => $endpoint,
+                'public_key' => 'key',
+                'auth_token' => 'token',
+            ]);
 
-        $sub->save();
-
-        return $sub;
+        return $subscription;
     }
 
-    protected function seeInConsoleOutput($expectedText)
+    /**
+     * @param string $expectedText
+     */
+    protected function seeInConsoleOutput(string $expectedText)
     {
         $consoleOutput = $this->app[Kernel::class]->output();
 

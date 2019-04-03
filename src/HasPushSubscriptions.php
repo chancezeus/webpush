@@ -2,69 +2,79 @@
 
 namespace NotificationChannels\WebPush;
 
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection|\NotificationChannels\WebPush\WebPushSubscription[] $webPushSubscriptions
+ * @mixin \Illuminate\Database\Eloquent\Model
+ */
 trait HasPushSubscriptions
 {
     /**
      * Get the user's subscriptions.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany|\NotificationChannels\WebPush\WebPushSubscription
      */
-    public function pushSubscriptions()
+    public function webPushSubscriptions(): MorphMany
     {
-        return $this->hasMany(PushSubscription::class);
+        return $this->morphMany(
+            WebPushSubscription::class,
+            'user',
+            'user_type',
+            'user_id',
+            $this->getKeyName()
+        );
     }
 
     /**
      * Update (or create) user subscription.
      *
-     * @param  string $endpoint
-     * @param  string|null $key
-     * @param  string|null $token
-     * @return \NotificationChannels\WebPush\PushSubscription
+     * @param string $endpoint
+     * @param string|null $key
+     * @param string|null $token
+     * @return \NotificationChannels\WebPush\WebPushSubscription
+     * @throws \Exception
      */
-    public function updatePushSubscription($endpoint, $key = null, $token = null)
+    public function updatePushSubscription(string $endpoint, string $key = null, string $token = null)
     {
-        $subscription = PushSubscription::findByEndpoint($endpoint);
+        /** @var \NotificationChannels\WebPush\WebPushSubscription $subscription */
+        $subscription = WebPushSubscription::query()
+            ->where('endpoint', $endpoint)
+            ->firstOrNew([
+                'endpoint' => $endpoint
+            ]);
 
-        if ($subscription && $this->pushSubscriptionBelongsToUser($subscription)) {
-            $subscription->public_key = $key;
-            $subscription->auth_token = $token;
-            $subscription->save();
+        $subscription->user()->associate($this);
+        $subscription->public_key = $key;
+        $subscription->auth_token = $token;
+        $subscription->save();
 
-            return $subscription;
-        }
-
-        if ($subscription && ! $this->pushSubscriptionBelongsToUser($subscription)) {
-            $subscription->delete();
-        }
-
-        return $this->pushSubscriptions()->save(new PushSubscription([
-            'endpoint' => $endpoint,
-            'public_key' => $key,
-            'auth_token' => $token,
-        ]));
+        return $subscription;
     }
 
     /**
      * Determine if the given subscription belongs to this user.
      *
-     * @param  \NotificationChannels\WebPush\PushSubscription $subscription
+     * @param \NotificationChannels\WebPush\WebPushSubscription $subscription
      * @return bool
      */
-    public function pushSubscriptionBelongsToUser($subscription)
+    public function pushSubscriptionBelongsToUser(WebPushSubscription $subscription)
     {
-        return (int) $subscription->user_id === (int) $this->getAuthIdentifier();
+        /** @var \Illuminate\Database\Eloquent\Model $user */
+        $user = $subscription->user;
+
+        return $user->is($this);
     }
 
     /**
      * Delete subscription by endpoint.
      *
-     * @param  string $endpoint
+     * @param string $endpoint
      * @return void
      */
-    public function deletePushSubscription($endpoint)
+    public function deletePushSubscription(string $endpoint)
     {
-        $this->pushSubscriptions()
+        $this->webPushSubscriptions()
             ->where('endpoint', $endpoint)
             ->delete();
     }
@@ -76,6 +86,6 @@ trait HasPushSubscriptions
      */
     public function routeNotificationForWebPush()
     {
-        return $this->pushSubscriptions;
+        return $this->webPushSubscriptions;
     }
 }

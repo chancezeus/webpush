@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreatePushSubscriptionsTable extends Migration
+class CreateWebPushSubscriptionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,18 +13,13 @@ class CreatePushSubscriptionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('push_subscriptions', function (Blueprint $table) {
+        Schema::create('web_push_subscriptions', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('user_id')->unsigned()->index();
+            $table->morphs('user');
             $table->string('endpoint', 500)->unique();
             $table->string('public_key')->nullable();
             $table->string('auth_token')->nullable();
             $table->timestamps();
-
-            $table->foreign('user_id')
-                    ->references('id')
-                    ->on('users')
-                    ->onDelete('cascade');
         });
     }
 
@@ -35,6 +30,6 @@ class CreatePushSubscriptionsTable extends Migration
      */
     public function down()
     {
-        Schema::drop('push_subscriptions');
+        Schema::drop('web_push_subscriptions');
     }
 }

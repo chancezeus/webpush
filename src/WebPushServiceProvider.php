@@ -2,9 +2,9 @@
 
 namespace NotificationChannels\WebPush;
 
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Minishlink\WebPush\WebPush;
-use Illuminate\Support\ServiceProvider;
 
 class WebPushServiceProvider extends ServiceProvider
 {
@@ -15,9 +15,11 @@ class WebPushServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->commands([VapidKeysGenerateCommand::class]);
+        $this->mergeConfigFrom(__DIR__ . '/../config/webpush.php', 'webpush');
 
-        $this->mergeConfigFrom(__DIR__.'/../config/webpush.php', 'webpush');
+        if ($this->app->runningInConsole()) {
+            $this->commands([VapidKeysGenerateCommand::class]);
+        }
     }
 
     /**
@@ -48,7 +50,7 @@ class WebPushServiceProvider extends ServiceProvider
         $publicKey = $webpush['vapid']['public_key'];
         $privateKey = $webpush['vapid']['private_key'];
 
-        if (! empty($webpush['gcm']['key'])) {
+        if (!empty($webpush['gcm']['key'])) {
             $config['GCM'] = $webpush['gcm']['key'];
         }
 
@@ -63,7 +65,7 @@ class WebPushServiceProvider extends ServiceProvider
             $config['VAPID']['subject'] = url('/');
         }
 
-        if (! empty($webpush['vapid']['pem_file'])) {
+        if (!empty($webpush['vapid']['pem_file'])) {
             $config['VAPID']['pemFile'] = $webpush['vapid']['pem_file'];
 
             if (Str::startsWith($config['VAPID']['pemFile'], 'storage')) {
@@ -82,14 +84,14 @@ class WebPushServiceProvider extends ServiceProvider
     protected function definePublishing()
     {
         $this->publishes([
-            __DIR__.'/../config/webpush.php' => config_path('webpush.php'),
+            __DIR__ . '/../config/webpush.php' => config_path('webpush.php'),
         ], 'config');
 
-        if (! class_exists('CreatePushSubscriptionsTable')) {
+        if (!class_exists('CreateWebPushSubscriptionsTable')) {
             $timestamp = date('Y_m_d_His', time());
 
             $this->publishes([
-                __DIR__.'/../migrations/create_push_subscriptions_table.php.stub' => $this->app->databasePath().'/migrations/'.$timestamp.'_create_push_subscriptions_table.php',
+                __DIR__ . '/../migrations/create_web_push_subscriptions_table.php.stub' => "{$this->app->databasePath()}/migrations/{$timestamp}_create_push_subscriptions_table.php",
             ], 'migrations');
         }
     }

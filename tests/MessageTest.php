@@ -2,8 +2,8 @@
 
 namespace NotificationChannels\WebPush\Test;
 
-use PHPUnit\Framework\TestCase;
 use NotificationChannels\WebPush\WebPushMessage;
+use PHPUnit\Framework\TestCase;
 
 class MessageTest extends TestCase
 {
@@ -17,7 +17,9 @@ class MessageTest extends TestCase
         $this->message = new WebPushMessage;
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_title()
     {
         $this->message->title('Message title');
@@ -25,7 +27,9 @@ class MessageTest extends TestCase
         $this->assertEquals('Message title', $this->message->toArray()['title']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_an_action()
     {
         $this->message->action('Some Action', 'some_action');
@@ -33,7 +37,9 @@ class MessageTest extends TestCase
         $this->assertEquals([['title' => 'Some Action', 'action' => 'some_action']], $this->message->toArray()['actions']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_badge()
     {
         $this->message->badge('/badge.jpg');
@@ -41,7 +47,9 @@ class MessageTest extends TestCase
         $this->assertEquals('/badge.jpg', $this->message->toArray()['badge']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_body()
     {
         $this->message->body('Message body');
@@ -49,7 +57,9 @@ class MessageTest extends TestCase
         $this->assertEquals('Message body', $this->message->toArray()['body']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_direction()
     {
         $this->message->dir('rtl');
@@ -57,7 +67,9 @@ class MessageTest extends TestCase
         $this->assertEquals('rtl', $this->message->toArray()['dir']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_icon()
     {
         $this->message->icon('/icon.jpg');
@@ -65,7 +77,9 @@ class MessageTest extends TestCase
         $this->assertEquals('/icon.jpg', $this->message->toArray()['icon']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_image()
     {
         $this->message->image('/image.jpg');
@@ -73,7 +87,9 @@ class MessageTest extends TestCase
         $this->assertEquals('/image.jpg', $this->message->toArray()['image']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_lang()
     {
         $this->message->lang('en');
@@ -81,7 +97,9 @@ class MessageTest extends TestCase
         $this->assertEquals('en', $this->message->toArray()['lang']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_renotify()
     {
         $this->message->renotify();
@@ -89,7 +107,9 @@ class MessageTest extends TestCase
         $this->assertTrue($this->message->toArray()['renotify']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_requireInteraction()
     {
         $this->message->requireInteraction();
@@ -97,7 +117,9 @@ class MessageTest extends TestCase
         $this->assertTrue($this->message->toArray()['requireInteraction']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_tag()
     {
         $this->message->tag('tag1');
@@ -105,7 +127,9 @@ class MessageTest extends TestCase
         $this->assertEquals('tag1', $this->message->toArray()['tag']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_vibration_pattern()
     {
         $this->message->vibrate([1, 2, 3]);
@@ -113,7 +137,9 @@ class MessageTest extends TestCase
         $this->assertEquals([1, 2, 3], $this->message->toArray()['vibrate']);
     }
 
-    /** @test */
+    /**
+     * @test
+     */
     public function can_set_arbitrary_data()
     {
         $this->message->data(['id' => 1]);

@@ -18,67 +18,67 @@ class WebPushMessage
     protected $actions = [];
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $badge;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $body;
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected $dir;
+    protected $dir = 'auto';
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $icon;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $image;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $lang;
 
     /**
      * @var bool
      */
-    protected $renotify;
+    protected $renotify = false;
 
     /**
      * @var bool
      */
-    protected $requireInteraction;
+    protected $requireInteraction = false;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $tag;
 
     /**
-     * @var array
+     * @var array|null
      */
     protected $vibrate;
 
     /**
-     * @var mixed
+     * @var mixed|null
      */
     protected $data;
 
     /**
      * Set the notification title.
      *
-     * @param  string $value
+     * @param string $value
      * @return $this
      */
-    public function title($value)
+    public function title(string $value): WebPushMessage
     {
         $this->title = $value;
 
@@ -88,13 +88,19 @@ class WebPushMessage
     /**
      * Add a notification action.
      *
-     * @param  string $title
-     * @param  string $action
+     * @param string $title
+     * @param string $action
+     * @param string|null $icon
      * @return $this
      */
-    public function action($title, $action)
+    public function action(string $title, string $action, string $icon = null): WebPushMessage
     {
-        $this->actions[] = compact('title', 'action');
+        $action = compact('title', 'action');
+        if ($icon) {
+            $action['icon'] = $icon;
+        }
+
+        $this->actions[] = $action;
 
         return $this;
     }
@@ -102,10 +108,10 @@ class WebPushMessage
     /**
      * Set the notification badge.
      *
-     * @param  string $value
+     * @param string|null $value
      * @return $this
      */
-    public function badge($value)
+    public function badge(?string $value): WebPushMessage
     {
         $this->badge = $value;
 
@@ -115,10 +121,10 @@ class WebPushMessage
     /**
      * Set the notification body.
      *
-     * @param  string $value
+     * @param string|null $value
      * @return $this
      */
-    public function body($value)
+    public function body(?string $value): WebPushMessage
     {
         $this->body = $value;
 
@@ -128,10 +134,10 @@ class WebPushMessage
     /**
      * Set the notification direction.
      *
-     * @param  string $value
+     * @param string $value
      * @return $this
      */
-    public function dir($value)
+    public function dir(string $value = 'auto'): WebPushMessage
     {
         $this->dir = $value;
 
@@ -141,10 +147,10 @@ class WebPushMessage
     /**
      * Set the notification icon url.
      *
-     * @param  string $value
+     * @param string|null $value
      * @return $this
      */
-    public function icon($value)
+    public function icon(?string $value): WebPushMessage
     {
         $this->icon = $value;
 
@@ -154,10 +160,10 @@ class WebPushMessage
     /**
      * Set the notification image url.
      *
-     * @param  string $value
+     * @param string|null $value
      * @return $this
      */
-    public function image($value)
+    public function image(?string $value): WebPushMessage
     {
         $this->image = $value;
 
@@ -167,10 +173,10 @@ class WebPushMessage
     /**
      * Set the notification language.
      *
-     * @param  string $value
+     * @param string|null $value
      * @return $this
      */
-    public function lang($value)
+    public function lang(?string $value): WebPushMessage
     {
         $this->lang = $value;
 
@@ -178,10 +184,10 @@ class WebPushMessage
     }
 
     /**
-     * @param  bool $value
+     * @param bool $value
      * @return $this
      */
-    public function renotify($value = true)
+    public function renotify(bool $value = true): WebPushMessage
     {
         $this->renotify = $value;
 
@@ -189,10 +195,10 @@ class WebPushMessage
     }
 
     /**
-     * @param  bool $value
+     * @param bool $value
      * @return $this
      */
-    public function requireInteraction($value = true)
+    public function requireInteraction(bool $value = true): WebPushMessage
     {
         $this->requireInteraction = $value;
 
@@ -202,10 +208,10 @@ class WebPushMessage
     /**
      * Set the notification tag.
      *
-     * @param  string $value
+     * @param string|null $value
      * @return $this
      */
-    public function tag($value)
+    public function tag(?string $value): WebPushMessage
     {
         $this->tag = $value;
 
@@ -215,10 +221,10 @@ class WebPushMessage
     /**
      * Set the notification vibration pattern.
      *
-     * @param  array $value
+     * @param array $value
      * @return $this
      */
-    public function vibrate($value)
+    public function vibrate(array $value): WebPushMessage
     {
         $this->vibrate = $value;
 
@@ -228,10 +234,10 @@ class WebPushMessage
     /**
      * Set the notification arbitrary data.
      *
-     * @param  mixed $value
+     * @param mixed $value
      * @return $this
      */
-    public function data($value)
+    public function data($value): WebPushMessage
     {
         $this->data = $value;
 
@@ -245,6 +251,8 @@ class WebPushMessage
      */
     public function toArray()
     {
-        return array_filter(get_object_vars($this));
+        return array_filter(get_object_vars($this), function ($value) {
+            return null !== $value;
+        });
     }
 }

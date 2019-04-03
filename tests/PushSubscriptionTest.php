@@ -2,14 +2,16 @@
 
 namespace NotificationChannels\WebPush\Test;
 
-use NotificationChannels\WebPush\PushSubscription;
+use NotificationChannels\WebPush\WebPushSubscription;
 
 class PushSubscriptionTest extends TestCase
 {
-    /** @test */
+    /**
+     * @test
+     */
     public function it_has_fillable_attributes()
     {
-        $sub = new PushSubscription([
+        $sub = new WebPushSubscription([
             'endpoint' => 'endpoint',
             'public_key' => 'key',
             'auth_token' => 'token',
@@ -20,21 +22,27 @@ class PushSubscriptionTest extends TestCase
         $this->assertEquals('token', $sub->auth_token);
     }
 
-    /** @test */
+    /**
+     * @test
+     * @throws \Exception
+     */
     public function it_can_find_subscription_by_endpoint()
     {
         $this->testUser->updatePushSubscription('endpoint');
-        $sub = PushSubscription::findByEndpoint('endpoint');
+        $sub = WebPushSubscription::findByEndpoint('endpoint');
 
         $this->assertEquals('endpoint', $sub->endpoint);
     }
 
-    /** @test */
+    /**
+     * @test
+     * @throws \Exception
+     */
     public function it_can_get_user()
     {
         $this->testUser->updatePushSubscription('endpoint');
-        $sub = PushSubscription::findByEndpoint('endpoint');
+        $subscription = WebPushSubscription::findByEndpoint('endpoint');
 
-        $this->assertEquals($this->testUser->id, $sub->user->id);
+        $this->assertTrue($this->testUser->is($subscription->user));
     }
 }
